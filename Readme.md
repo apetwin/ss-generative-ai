@@ -23,7 +23,7 @@ here is an example:
     --volume-type gp2 \
     --size 10 \
     --availability-zone us-east-1a \
-    --profile gen-ai`
+    --profile <profile name>`
 
 it is fullfil our requirements:
 "Setup cloud infrastructure by creating 1 unattached disk, 2 non-encrypted disks, 3 non-encrypted snapshots."
@@ -47,7 +47,7 @@ aws ec2 create-volume \
     --size 10 \
     --availability-zone us-east-1a \
 	--no-encrypted \
-    --profile gen-ai
+    --profile <profile name>
 `
 ok we did it twice
 ## screenshot 5
@@ -69,27 +69,24 @@ let's make it encrypted
     --size 10 \
     --availability-zone us-east-1a \
 	--encrypted \
-    --profile gen-ai`
+    --profile <profile name>`
 
 as we have one encrypted volume, one of the previously created can be deleted
 
-'aws ec2 describe-volumes us-east-1 --profile gen-ai'
+'aws ec2 describe-volumes us-east-1 --profile <profile name>'
 
-'aws ec2 delete-volume --volume-id vol-049df61146c4d7901 --profile gen-ai'
+'aws ec2 delete-volume --volume-id vol-1234567890 --profile <profile name>'
 
 Ok let's move on to snapshots:
 'aws ec2 describe-volumes \
     --query "Volumes[].{ID:VolumeId}" \
-    --profile gen-ai'
+    --profile <profile name>'
 
 ## screenshot 8
 ![terminal describe volumes](./screenshots/screenshot8.png)
 
-vol-0a0a6e1e3e7f48bc7
-vol-0676374e43097a4a7
-vol-011597d53fcdc9581
 
-aws ec2 create-snapshot --volume-id vol-011597d53fcdc9581 --description "this volume is encrypted" --profile gen-ai
+aws ec2 create-snapshot --volume-id vol-1234567890 --description "this volume is encrypted" --profile <profile name>
 ## screenshot 9
 ![terminal create snapshots](./screenshots/screenshot9.png)
 
@@ -131,7 +128,7 @@ aws lambda create-function \
 ' aws s3api create-bucket \
     --bucket vol-metrics \
     --region us-east-1 \
-    --profile gen-ai'
+    --profile <profile name>'
 
 ## screenshot 16
 ![aws terminal s3api](./screenshots/screenshot16.png)
