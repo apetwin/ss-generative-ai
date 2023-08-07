@@ -138,5 +138,6 @@ Lifecycle rule added
 
 Pause at 07-08-2023_00:16 
 --------------------------------------
+Start at 07-08-2023_07:00
 
 let's add policy to be abele to write output in s3 bucket
