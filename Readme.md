@@ -141,3 +141,17 @@ Pause at 07-08-2023_00:16
 Start at 07-08-2023_09:45
 
 let's add policy to be able to write output in s3 bucket
+## screenshot 17
+![aws console IAM s3 bucket policy](./screenshots/screenshot17.png)
+
+
+ok, now we are almost ready to start our lambda coding
+let's quickly check if such lambda exist
+## screenshot 18
+![stackowerflow lambda](./screenshots/screenshot18.png)
+
+from my previous experience I know that we have to access to volumes and snapshots via boto3 ec2 client
+
+I have doubts that any of created volumes should be attached
+but let's assume that we will need to filter out unattached volumes anyway
+
