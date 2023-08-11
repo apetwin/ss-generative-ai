@@ -27,8 +27,8 @@ here is an example:
 
 it is fullfil our requirements:
 "Setup cloud infrastructure by creating 1 unattached disk, 2 non-encrypted disks, 3 non-encrypted snapshots."
-## screenshot 3
-![terminal volume creation region error](./screenshots/screenshot3.png)
+
+<em>there is an error, region was not specified, but I missed to make a proper screenshot here, supposing it will fit in one screencast.</em>
 
 let's try to apply it
 I've specified a region in aws configure file
@@ -55,13 +55,10 @@ ok we did it twice
 
 let's check the console if everything is fine so far
 ## screenshot 6
-![aws console volumes](./screenshots/screenshot6.png)
+![aws console volumes](./screenshots/volumes_console.png)
 
 as we can see all 3 volumes are unencrypted
 so as we have in reqs one volume separate, I suggest it should be encrypted
-
-## screenshot 7
-![terminal encrypted volume created](./screenshots/screenshot7.png)
 
 let's make it encrypted
 `aws ec2 create-volume \
@@ -82,17 +79,13 @@ Ok let's move on to snapshots:
     --query "Volumes[].{ID:VolumeId}" \
     --profile <profile name>'
 
-## screenshot 8
-![terminal describe volumes](./screenshots/screenshot8.png)
-
-
+```
 aws ec2 create-snapshot --volume-id vol-1234567890 --description "this volume is encrypted" --profile <profile name>
-## screenshot 9
-![terminal create snapshots](./screenshots/screenshot9.png)
+```
 
 let's check console for snapshots
 ## screenshot 10
-![aws console snapshots](./screenshots/screenshot10.png)
+![aws console snapshots](./screenshots/snaps_console.png)
 
 
 now let's create a lambdda function
@@ -100,12 +93,14 @@ now let's create a lambdda function
 ## screenshot 11
 ![aws doc lambda](./screenshots/screenshot11.png)
 
+```
 aws lambda create-function \
     --function-name ResMetrics \
     --runtime python3.11 \
     --zip-file fileb://res-metrics.zip \
     --handler main.handler \
     --role arn:aws:iam::123456789012:role/service-role/MyTestFunction-role
+```
 
  actually it's easier to do in console, if we are not going to automate this deployment
 
@@ -136,7 +131,9 @@ aws lambda create-function \
 s3 bucket created
 Lifecycle rule added
 
-Pause at 07-08-2023_00:16 
+Pause at 07-08-2023_00:16
+
+spent 1H
 --------------------------------------
 Start at 07-08-2023_09:45
 
@@ -147,6 +144,7 @@ let's add policy to be able to write output in s3 bucket
 
 ok, now we are almost ready to start our lambda coding
 let's quickly check if such lambda exist
+
 ## screenshot 18
 ![stackowerflow lambda](./screenshots/screenshot18.png)
 
@@ -156,6 +154,8 @@ I have doubts that any of created volumes should be attached
 but let's assume that we will need to filter out unattached volumes anyway
 
 Pause at 07-08-2023_11:00
+
+spent 1.25H
 --------------------------------------
 Start at 07-08-2023_16:30
 
@@ -176,6 +176,8 @@ of course they can be united in one policy, but I like when they are granular
 another thing I'd like to do is to make running code locally for faster dedugging
 
 Pause at 07-08-2023_17:00
+
+spent 0.5H
 --------------------------------------
 Start at 08-08-2023_00:30
 
@@ -183,25 +185,28 @@ let's define what metrics we are going to collect, to underestand that I'll chec
 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2/client/describe_volumes.html
 
 https://hands-on.cloud/boto3-cloudwatch-tutorial/
+https://stackoverflow.com/questions/37324085/boto3-get-ec2-instances-volume
+https://gist.github.com/beaufour/1840415
 
+Pause at 08-08-2023_01:30
 
-Pause at 08-08-2023_01:00
+spent 1.0H
 -------------------------------------- 
-Start at 10-08-2023_12:30
+Start at 09-08-2023_12:30
 
 ## screenshot 20
 ![boto3 doc](./screenshots/screenshot20.png)
 
-
-I've decided to collect the following metrics:
+As I have had some experience collecting resource information through boto3,
+I decided to collect the following metrics:
 
 for volumes:
 - 'ebs_id'
 - 'ebs_name'
-- 'ebs_device'
-- 'ec2_instance_id'
-- 'ec2_instance_name'
-- 'region'
+- 'ebs_device' <em>redundant</em>
+- 'ec2_instance_id' <em>redundant</em>
+- 'ec2_instance_name' <em>redundant</em>
+- 'region' <em>redundant</em>
 - 'az'
 - 'ebs_type' 
 - 'ebs_size'
@@ -217,6 +222,12 @@ for snapshots:
 - 'region'
 - 'snapshot_size'
 - 'snapshot_creation_date'
+
+Pause at 09-08-2023_14:00
+
+spent 1.5H
+-------------------------------------- 
+Start at 10-08-2023_09:30
 
 additionaly as aws give us a possibility to collect more metrics with CloudWath, I'll try to get more info about volume activity as the following valuable metrics:
 - Volume Read/Write Bytes
@@ -236,17 +247,63 @@ for volumes:
 
 for snapshots no changes
 
+As we don't have CI/CD setup, I've created a version to test it locally, by using configured aws profile
+there will be a difference in main function to call all other service functions and put metrics report in s3 bucket.
+
+```
+def main():
+    total_report = generate_consolidated_report()
+
+    bucket_name = "vol-metrics"
+    current_datetime = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
+    filename = f"metrics_report_{current_datetime}.json"
+
+    save_to_s3(total_report, filename, bucket_name)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+in lambda will be called by handler function:
+```
+def lambda_handler(event, context):
+
+    total_report = generate_consolidated_report()
+    bucket_name = "vol-metrics"
+    current_datetime = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
+    filename = f"metrics_report_{current_datetime}.json"
+    save_to_s3(total_report, filename, bucket_name)
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Report generated successfully!')
+    }
+```
+
 
 ## screenshot 22
 ![test function](./screenshots/screenshot22.png)
 
+Pause at 10-08-2023_11:00
+
+spent 1.5H
+-------------------------------------- 
+Start at 11-08-2023_12:00
 
 let's add EventBridge rule to trigger our function once a day
+## screenshot 23
+![event rule aws cosole](./screenshots/screenshot23.png)
 `aws events put-rule --schedule-expression "rate(1 day)" --name everyDayRule --profile gen-ai`
 
 
 let's test our lambda
+## screenshot 24
+![test function](./screenshots/screenshot24.png)
 
-## screenshot 23
-![test function](./screenshots/screenshot23.png)
+Metrics report generated successfully
+## screenshot 25
+![report json](./screenshots/screenshot25.png)
 
+SPENT TOTAL 8H
+-------------------------------------- 
