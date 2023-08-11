@@ -19,11 +19,13 @@ Let's check how it can be done.
 ![AWS CLI documentation EC2](./screenshots/screenshot2.png)
 
 here is an example:
-`aws ec2 create-volume \
+```
+aws ec2 create-volume \
     --volume-type gp2 \
     --size 10 \
     --availability-zone us-east-1a \
     --profile <profile name>`
+```
 
 it is fullfil our requirements:
 "Setup cloud infrastructure by creating 1 unattached disk, 2 non-encrypted disks, 3 non-encrypted snapshots."
@@ -35,23 +37,19 @@ I've specified a region in aws configure file
 we can try again
 
 ok volume was created
-## screenshot 4
-![terminal volume created](./screenshots/screenshot4.png)
 
 let's create 2 non encrypted disks
 guess it's the same command but with some parameter to define unencrypted state.
 
-`
+```
 aws ec2 create-volume \
     --volume-type gp2 \
     --size 10 \
     --availability-zone us-east-1a \
 	--no-encrypted \
     --profile <profile name>
-`
+```
 ok we did it twice
-## screenshot 5
-![terminal 2 non encrypted volumes created](./screenshots/screenshot5.png)
 
 let's check the console if everything is fine so far
 ## screenshot 6
