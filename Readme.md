@@ -105,7 +105,7 @@ aws lambda create-function \
     --runtime python3.11 \
     --zip-file fileb://res-metrics.zip \
     --handler main.handler \
-    --role arn:aws:iam::123456789012:role/service-role/MyTestFunction-role-tges6bf4
+    --role arn:aws:iam::123456789012:role/service-role/MyTestFunction-role
 
  actually it's easier to do in console, if we are not going to automate this deployment
 
@@ -154,4 +154,99 @@ from my previous experience I know that we have to access to volumes and snapsho
 
 I have doubts that any of created volumes should be attached
 but let's assume that we will need to filter out unattached volumes anyway
+
+Pause at 07-08-2023_11:00
+--------------------------------------
+Start at 07-08-2023_16:30
+
+I have found the following repo with similar functionality
+
+ref:
+https://github.com/ericg-aws/aws-storage-get-metrics/blob/main/get-ebs-metrics.py
+
+
+let's modify it a bit for our needs
+
+I've realized that I need add more permissions to get CloudWatch metrics
+
+## screenshot 19
+![aws iam lambda cw policy](./screenshots/screenshot19.png)
+
+of course they can be united in one policy, but I like when they are granular
+another thing I'd like to do is to make running code locally for faster dedugging
+
+Pause at 07-08-2023_17:00
+--------------------------------------
+Start at 08-08-2023_00:30
+
+let's define what metrics we are going to collect, to underestand that I'll check boto3 documentation for possible options:
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2/client/describe_volumes.html
+
+https://hands-on.cloud/boto3-cloudwatch-tutorial/
+
+
+Pause at 08-08-2023_01:00
+-------------------------------------- 
+Start at 10-08-2023_12:30
+
+## screenshot 20
+![boto3 doc](./screenshots/screenshot20.png)
+
+
+I've decided to collect the following metrics:
+
+for volumes:
+- 'ebs_id'
+- 'ebs_name'
+- 'ebs_device'
+- 'ec2_instance_id'
+- 'ec2_instance_name'
+- 'region'
+- 'az'
+- 'ebs_type' 
+- 'ebs_size'
+- 'ebs_iops'
+- 'ebs_throughput'
+
+## screenshot 21
+![volume function](./screenshots/screenshot21.png)
+
+for snapshots:
+- 'snapshot_id'
+- 'snapshot_name'
+- 'region'
+- 'snapshot_size'
+- 'snapshot_creation_date'
+
+additionaly as aws give us a possibility to collect more metrics with CloudWath, I'll try to get more info about volume activity as the following valuable metrics:
+- Volume Read/Write Bytes
+- Volume Read/Write Ops
+
+this metrics can show us if volume had recent activity, so we can understand if it was attached recently (within 1 day eriod for example)
+
+After several tests, I realized that the list of metrics can be shortened to get rid of redundant information:
+for volumes:
+- 'ebs_id'
+- 'ebs_name'
+- 'az'
+- 'ebs_type'
+- 'ebs_size'
+- 'ebs_iops'
+- 'ebs_throughput' #valid only for gp3
+
+for snapshots no changes
+
+
+## screenshot 22
+![test function](./screenshots/screenshot22.png)
+
+
+let's add EventBridge rule to trigger our function once a day
+`aws events put-rule --schedule-expression "rate(1 day)" --name everyDayRule --profile gen-ai`
+
+
+let's test our lambda
+
+## screenshot 23
+![test function](./screenshots/screenshot23.png)
 
